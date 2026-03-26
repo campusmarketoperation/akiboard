@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AkiBoard — 店舗管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange:#f97316;--orange-dark:#c2640f;--orange-light:#fff7ed;
+    --green:#22c55e;--green-bg:#f0fdf4;--red:#ef4444;
+    --bg:#f5f4f0;--surface:#fff;--border:rgba(0,0,0,0.08);
+    --text:#1a1a1a;--muted:#888;--radius:18px;--radius-sm:10px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;position:sticky;top:0;z-index:100}
+  .header-inner{max-width:540px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px}
+  .logo{font-family:'Montserrat',sans-serif;font-size:18px;font-weight:800;color:var(--orange)}
+  .logo-sub{font-size:11px;color:var(--muted);font-weight:400;margin-left:6px;font-family:'Noto Sans JP',sans-serif}
+  .view-link{font-size:12px;color:var(--orange);text-decoration:none;font-weight:500;border:1px solid var(--orange);padding:5px 12px;border-radius:20px}
+  .tab-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 20px;max-width:540px;margin:0 auto}
+  .tab-btn{padding:13px 20px;font-size:13px;font-weight:500;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;font-family:'Noto Sans JP',sans-serif}
+  .tab-btn.active{color:var(--orange);border-bottom-color:var(--orange)}
+  .body{max-width:540px;margin:0 auto;padding:20px}
+  .tab-view{display:none}
+  .tab-view.active{display:block}
+  .store-badge{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .store-badge-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .store-badge-name{font-size:15px;font-weight:700;margin-bottom:2px}
+  .store-badge-sub{font-size:12px;color:var(--muted)}
+  .edit-link{font-size:12px;color:var(--orange);cursor:pointer;font-weight:500;flex-shrink:0}
+  .no-store-notice{background:#fff7ed;border:1px solid #fed7aa;border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;font-size:13px;color:#c2640f;display:flex;align-items:center;gap:10px}
+  .live-panel{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:16px;display:none}
+  .live-panel.visible{display:block}
+  .live-panel-header{background:var(--green-bg);padding:12px 18px;display:flex;align-items:center;justify-content:space-between}
+  .live-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#15803d}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+  .timer-badge{font-size:12px;font-weight:600;color:#16a34a;background:#dcfce7;padding:4px 10px;border-radius:20px}
+  .timer-badge.warn{color:#dc2626;background:#fef2f2}
+  .live-panel-body{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+  .status-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .status-btn{padding:13px 8px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:500;cursor:pointer;text-align:center;font-family:'Noto Sans JP',sans-serif;color:var(--muted);transition:all .15s;line-height:1.4}
+  .status-btn.sel-open{background:#f0fdf4;color:#16a34a;border-color:#86efac}
+  .status-btn.sel-some{background:#fff7ed;color:#ea580c;border-color:#fdba74}
+  .status-btn.sel-few{background:#fef2f2;color:#dc2626;border-color:#fca5a5}
+  .status-btn.sel-closed{background:#f3f4f6;color:#6b7280;border-color:#d1d5db}
+  .extend-btn{width:100%;padding:13px;background:var(--green-bg);color:#16a34a;border:1.5px solid #86efac;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .15s}
+  .extend-btn:hover{background:#dcfce7}
+  .stop-btn{width:100%;padding:10px;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--muted);cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:background .15s}
+  .stop-btn:hover{background:var(--bg)}
+  .form-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:20px;margin-bottom:14px}
+  .form-card h3{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
+  .form-row{margin-bottom:14px}
+  .form-row:last-child{margin-bottom:0}
+  label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px}
+  input[type=text],select,textarea{width:100%;padding:10px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;-webkit-appearance:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--orange);background:#fff}
+  textarea{resize:vertical;min-height:68px}
+  .seat-row{display:flex;align-items:center;gap:12px}
+  .seat-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:22px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .seat-btn:hover{background:var(--orange-light);border-color:var(--orange)}
+  .seat-num{font-size:30px;font-weight:700;color:var(--orange);min-width:44px;text-align:center}
+  .seat-unit{font-size:13px;color:var(--muted)}
+  .genre-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .genre-btn{padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:12px;font-weight:500;cursor:pointer;text-align:center;font-family:'Noto Sans JP',sans-serif;color:var(--muted);transition:all .15s}
+  .genre-btn.selected{background:var(--orange-light);border-color:var(--orange);color:var(--orange)}
+  .time-row{display:flex;gap:8px;align-items:center}
+  .primary-btn{width:100%;padding:16px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .2s}
+  .primary-btn:hover:not(:disabled){background:var(--orange-dark);transform:translateY(-1px)}
+  .primary-btn:disabled{background:#d1d5db;cursor:default;transform:none}
+  .save-btn{width:100%;padding:14px;background:var(--text);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .2s}
+  .save-btn:hover{background:#333;transform:translateY(-1px)}
+  .hint{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
+  .hint a{color:var(--orange);text-decoration:none;font-weight:500}
+  .saved-notice{display:none;background:var(--green-bg);border:1px solid #bbf7d0;border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:#15803d;font-weight:500;margin-top:12px;text-align:center}
+  .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+  .photo-slot{aspect-ratio:1;border-radius:10px;border:1.5px dashed var(--border);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;overflow:hidden;position:relative;transition:border-color .15s}
+  .photo-slot:hover{border-color:var(--orange)}
+  .photo-slot img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:8px}
+  .photo-slot-icon{font-size:20px;color:var(--muted);line-height:1}
+  .photo-slot-lbl{font-size:10px;color:var(--muted)}
+  .photo-del{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:10px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2;line-height:1}
+  .photo-slot:hover .photo-del{display:flex}
+  .photo-hint{font-size:11px;color:var(--muted);margin-top:6px}
+  .preview-wrap{background:var(--bg);border-radius:var(--radius-sm);padding:12px;margin-top:10px;display:flex;align-items:center;gap:12px;border:1px solid var(--border)}
+  .preview-canvas{border-radius:8px;flex-shrink:0}
+  .preview-info{font-size:12px;color:var(--muted);line-height:1.7}
+  .preview-info strong{color:var(--text);display:block;font-size:13px;margin-bottom:2px}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div><span class="logo">AkiBoard</span><span class="logo-sub">店舗管理</span></div>
+    <a class="view-link" href="index.html">お客さん画面 →</a>
+  </div>
+</header>
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-publish-btn" onclick="switchTab('publish')">空き公開</button>
+  <button class="tab-btn" id="tab-register-btn" onclick="switchTab('register')">店舗登録</button>
+</div>
+<div class="body">
+
+  <!-- 空き公開 -->
+  <div class="tab-view active" id="tab-publish">
+    <div id="store-badge-wrap"></div>
+    <div class="live-panel" id="live-panel">
+      <div class="live-panel-header">
+        <div class="live-title"><div class="live-dot"></div>公開中</div>
+        <div class="timer-badge" id="timer-badge">60分</div>
+      </div>
+      <div class="live-panel-body">
+        <div>
+          <label style="margin-bottom:8px;">現在の状況</label>
+          <div class="status-grid">
+            <button class="status-btn sel-open" onclick="setStatus('open',this)">◎ 余裕あり</button>
+            <button class="status-btn" onclick="setStatus('some',this)">○ 空きあり</button>
+            <button class="status-btn" onclick="setStatus('few',this)">△ 残りわずか</button>
+            <button class="status-btn" onclick="setStatus('closed',this)">× 本日終了</button>
+          </div>
+        </div>
+        <button class="extend-btn" onclick="extendTimer()">✓ まだ空いてます（1時間延長）</button>
+        <button class="stop-btn" onclick="unpublish()">公開を取り消す</button>
+      </div>
+    </div>
+    <div id="form-wrap">
+      <div class="form-card">
+        <h3>今夜の空き状況</h3>
+        <div class="form-row">
+          <label>空き席数</label>
+          <div class="seat-row">
+            <button class="seat-btn" onclick="changeSeat(-1)">−</button>
+            <div class="seat-num" id="seat-display">8</div>
+            <button class="seat-btn" onclick="changeSeat(1)">+</button>
+            <span class="seat-unit">席</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>受付時間</label>
+          <div class="time-row">
+            <select id="f-from" style="flex:1;">
+              <option>18:00</option><option>19:00</option><option>20:00</option>
+              <option selected>21:00</option><option>22:00</option><option>23:00</option>
+            </select>
+            <span style="font-size:13px;color:var(--muted);">〜</span>
+            <select id="f-to" style="flex:1;">
+              <option>23:00</option><option>24:00</option>
+              <option selected>25:00</option><option>26:00</option><option>27:00</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>一言メモ（任意）</label>
+          <textarea id="f-memo" placeholder="例：個室あり・飲み放題プランあり・2次会歓迎"></textarea>
+        </div>
+      </div>
+      <button class="primary-btn" id="publish-btn" onclick="publish()">今すぐ公開する</button>
+      <p class="hint">公開後はお客さん画面にリアルタイムで表示されます。<br><a href="index.html">お客さん画面を確認する →</a></p>
+    </div>
+  </div>
+
+  <!-- 店舗登録 -->
+  <div class="tab-view" id="tab-register">
+    <div class="form-card">
+      <h3>基本情報</h3>
+      <div class="form-row">
+        <label>店舗名 <span style="color:var(--red);">*</span></label>
+        <input type="text" id="r-name" placeholder="例：居酒屋 むらさき" oninput="updatePreview()">
+      </div>
+      <div class="form-row">
+        <label>エリア <span style="color:var(--red);">*</span></label>
+        <input type="text" id="r-area" placeholder="例：梅田・難波・天王寺">
+      </div>
+      <div class="form-row">
+        <label>ジャンル</label>
+        <div class="genre-grid">
+          <button class="genre-btn selected" onclick="selectGenre(this,'izakaya')">🍺 居酒屋</button>
+          <button class="genre-btn" onclick="selectGenre(this,'restaurant')">🍽 レストラン</button>
+          <button class="genre-btn" onclick="selectGenre(this,'bar')">🥂 バー</button>
+          <button class="genre-btn" onclick="selectGenre(this,'ramen')">🍜 ラーメン</button>
+          <button class="genre-btn" onclick="selectGenre(this,'cafe')">☕ カフェ</button>
+          <button class="genre-btn" onclick="selectGenre(this,'other')">🍴 その他</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>最寄り駅・徒歩分数</label>
+        <input type="text" id="r-access" placeholder="例：梅田駅 徒歩2分" oninput="updatePreview()">
+      </div>
+      <div class="form-row">
+        <label>GoogleマップURL</label>
+        <input type="text" id="r-mapurl" placeholder="例：https://maps.app.goo.gl/xxxx">
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h3>宣材写真（3〜5枚）</h3>
+      <div class="photo-grid" id="photo-grid">
+        <div class="photo-slot" id="slot-0" onclick="triggerUpload(0)">
+          <div class="photo-slot-icon">+</div>
+          <div class="photo-slot-lbl">写真1</div>
+          <button class="photo-del" onclick="deletePhoto(event,0)">×</button>
+        </div>
+        <div class="photo-slot" id="slot-1" onclick="triggerUpload(1)">
+          <div class="photo-slot-icon">+</div>
+          <div class="photo-slot-lbl">写真2</div>
+          <button class="photo-del" onclick="deletePhoto(event,1)">×</button>
+        </div>
+        <div class="photo-slot" id="slot-2" onclick="triggerUpload(2)">
+          <div class="photo-slot-icon">+</div>
+          <div class="photo-slot-lbl">写真3</div>
+          <button class="photo-del" onclick="deletePhoto(event,2)">×</button>
+        </div>
+        <div class="photo-slot" id="slot-3" onclick="triggerUpload(3)">
+          <div class="photo-slot-icon">+</div>
+          <div class="photo-slot-lbl">写真4</div>
+          <button class="photo-del" onclick="deletePhoto(event,3)">×</button>
+        </div>
+        <div class="photo-slot" id="slot-4" onclick="triggerUpload(4)">
+          <div class="photo-slot-icon">+</div>
+          <div class="photo-slot-lbl">写真5</div>
+          <button class="photo-del" onclick="deletePhoto(event,4)">×</button>
+        </div>
+      </div>
+      <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="onPhotoSelected(this)">
+      <p class="photo-hint">店内・料理・外観などを登録してください。空き公開時のストーリーズに自動で使われます。</p>
+      <div class="preview-wrap" id="preview-wrap" style="display:none;">
+        <canvas id="preview-canvas" class="preview-canvas" width="80" height="142"></canvas>
+        <div class="preview-info">
+          <strong>ストーリーズのプレビュー</strong>
+          空き公開時にこのデザインで自動投稿されます。席数・時間・メモは毎回自動で差し替わります。
+        </div>
+      </div>
+    </div>
+
+    <button class="save-btn" onclick="saveProfile()">この内容で保存する</button>
+    <div class="saved-notice" id="saved-notice">✓ 保存しました。「空き公開」タブから今夜の情報を公開できます。</div>
+  </div>
+
+</div>
+<script>
+const GENRE_ICONS={izakaya:'🍺',restaurant:'🍽',bar:'🥂',ramen:'🍜',cafe:'☕',other:'🍴'};
+const GENRE_LABELS={izakaya:'居酒屋',restaurant:'レストラン',bar:'バー',ramen:'ラーメン',cafe:'カフェ',other:'その他'};
+const STALE_MS=60*60*1000;
+let seats=8,selectedGenre='izakaya',timerInterval=null;
+
+function getProfile(){try{return JSON.parse(localStorage.getItem('akiboard_profile')||'null')}catch(e){return null}}
+function setProfile(p){localStorage.setItem('akiboard_profile',JSON.stringify(p))}
+function getMyStore(){try{return JSON.parse(localStorage.getItem('akiboard_mine')||'null')}catch(e){return null}}
+function setMyStore(s){localStorage.setItem('akiboard_mine',s?JSON.stringify(s):'null')}
+function saveStore(store){
+  try{const raw=localStorage.getItem('akiboard_stores');const arr=raw?JSON.parse(raw):[];const idx=arr.findIndex(s=>s.id===store.id);if(idx>=0)arr[idx]=store;else arr.unshift(store);localStorage.setItem('akiboard_stores',JSON.stringify(arr))}catch(e){}
+}
+function removeStore(id){
+  try{const raw=localStorage.getItem('akiboard_stores');const arr=raw?JSON.parse(raw):[];localStorage.setItem('akiboard_stores',JSON.stringify(arr.filter(s=>s.id!==id)))}catch(e){}
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab+'-btn').classList.add('active');
+  if(tab==='publish')renderPublishTab();
+  if(tab==='register')renderRegisterTab();
+}
+
+function genreBg(g){return{izakaya:'#fff7ed',restaurant:'#f0fdf4',bar:'#fdf4ff',ramen:'#fef2f2',cafe:'#fffbeb',other:'#f8fafc'}[g]||'#f8fafc'}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function renderStoreBadge(){
+  const wrap=document.getElementById('store-badge-wrap');
+  const p=getProfile();
+  if(p){
+    wrap.innerHTML=`<div class="store-badge"><div class="store-badge-icon" style="background:${genreBg(p.genre)}">${GENRE_ICONS[p.genre]||'🍴'}</div><div style="flex:1"><div class="store-badge-name">${esc(p.name)}</div><div class="store-badge-sub">${esc(p.area)}　${GENRE_LABELS[p.genre]||p.genre}</div></div><span class="edit-link" onclick="switchTab('register')">編集</span></div>`;
+  }else{
+    wrap.innerHTML=`<div class="no-store-notice">⚠ 店舗情報が未登録です。<span class="edit-link" style="margin-left:4px;" onclick="switchTab('register')">今すぐ登録する →</span></div>`;
+  }
+}
+
+function renderPublishTab(){
+  renderStoreBadge();
+  const mine=getMyStore();const p=getProfile();
+  const btn=document.getElementById('publish-btn');
+  if(mine){
+    document.getElementById('live-panel').classList.add('visible');
+    document.getElementById('form-wrap').style.display='none';
+    restoreStatusBtns(mine.status||'open');
+    startTimer(mine.refreshedAt||mine.ts);
+  }else{
+    document.getElementById('live-panel').classList.remove('visible');
+    document.getElementById('form-wrap').style.display='block';
+    btn.disabled=!p;
+    btn.textContent=p?'今すぐ公開する':'店舗登録が必要です';
+    if(timerInterval)clearInterval(timerInterval);
+  }
+}
+
+function renderRegisterTab(){
+  const p=getProfile();
+  if(p){
+    document.getElementById('r-name').value=p.name||'';
+    document.getElementById('r-area').value=p.area||'';
+    document.getElementById('r-access').value=p.access||'';
+    document.getElementById('r-mapurl').value=p.mapurl||'';
+    selectedGenre=p.genre||'izakaya';
+    document.querySelectorAll('.genre-btn').forEach(b=>{
+      b.classList.remove('selected');
+      const g=b.getAttribute('onclick').match(/'(\w+)'/)?.[1];
+      if(g===selectedGenre)b.classList.add('selected');
+    });
+    if(p.photos&&p.photos.length){
+      p.photos.forEach((src,i)=>{ if(src)renderPhotoSlot(i,src); });
+      showPreview(p.photos[0],p.name||'',p.access||'');
+    }
+  }
+}
+
+function saveProfile(){
+  const name=document.getElementById('r-name').value.trim();
+  const area=document.getElementById('r-area').value.trim();
+  const access=document.getElementById('r-access').value.trim();
+  const mapurl=document.getElementById('r-mapurl').value.trim();
+  if(!name||!area){alert('店舗名とエリアを入力してください');return}
+  const existing=getProfile()||{};
+  setProfile({name,area,genre:selectedGenre,access,mapurl,photos:existing.photos||[]});
+  const n=document.getElementById('saved-notice');
+  n.style.display='block';
+  setTimeout(()=>{n.style.display='none'},3000);
+  renderStoreBadge();
+}
+
+function publish(){
+  const p=getProfile();
+  if(!p){alert('先に店舗登録をしてください');switchTab('register');return}
+  const from=document.getElementById('f-from').value;
+  const to=document.getElementById('f-to').value;
+  const memo=document.getElementById('f-memo').value.trim();
+  const store={id:'user_'+Date.now(),name:p.name,area:p.area,genre:p.genre,seats,from,to,memo,ts:Date.now(),refreshedAt:Date.now(),status:'open'};
+  saveStore(store);setMyStore(store);
+  const btn=document.getElementById('publish-btn');
+  btn.textContent='公開しました！';btn.style.background='#22c55e';
+  setTimeout(()=>{btn.style.background='';renderPublishTab()},700);
+}
+
+function extendTimer(){
+  const mine=getMyStore();if(!mine)return;
+  mine.refreshedAt=Date.now();saveStore(mine);setMyStore(mine);startTimer(mine.refreshedAt);
+  const btn=document.querySelector('.extend-btn');
+  btn.textContent='✓ 更新しました！';setTimeout(()=>{btn.textContent='✓ まだ空いてます（1時間延長）'},1500);
+}
+
+function setStatus(status,el){
+  const mine=getMyStore();if(!mine)return;
+  mine.status=status;mine.refreshedAt=Date.now();saveStore(mine);setMyStore(mine);
+  restoreStatusBtns(status);startTimer(mine.refreshedAt);
+  if(status==='closed')setTimeout(()=>unpublish(),900);
+}
+
+function unpublish(){
+  const mine=getMyStore();if(mine)removeStore(mine.id);setMyStore(null);
+  if(timerInterval)clearInterval(timerInterval);renderPublishTab();
+}
+
+function restoreStatusBtns(cur){
+  document.querySelectorAll('.status-btn').forEach(b=>{
+    b.className='status-btn';
+    const s=b.getAttribute('onclick').match(/'(\w+)'/)?.[1];
+    if(s===cur)b.classList.add('sel-'+cur);
+  });
+}
+
+function startTimer(refreshedAt){
+  if(timerInterval)clearInterval(timerInterval);
+  function tick(){
+    const remaining=Math.max(0,STALE_MS-(Date.now()-refreshedAt));
+    const mins=Math.ceil(remaining/60000);
+    const el=document.getElementById('timer-badge');if(!el)return;
+    el.textContent=remaining===0?'期限切れ':mins+'分';
+    el.className='timer-badge'+(mins<=15?' warn':'');
+  }
+  tick();timerInterval=setInterval(tick,30000);
+}
+
+function changeSeat(d){seats=Math.max(1,Math.min(99,seats+d));document.getElementById('seat-display').textContent=seats}
+function selectGenre(el,g){selectedGenre=g;document.querySelectorAll('.genre-btn').forEach(b=>b.classList.remove('selected'));el.classList.add('selected');updatePreview()}
+
+let currentSlot=0;
+const photoData=new Array(5).fill(null);
+
+function triggerUpload(idx){
+  currentSlot=idx;
+  document.getElementById('photo-input').click();
+}
+
+function onPhotoSelected(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    photoData[currentSlot]=e.target.result;
+    renderPhotoSlot(currentSlot,e.target.result);
+    savePendingPhotos();
+    showPreview(e.target.result,document.getElementById('r-name').value,document.getElementById('r-access').value);
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+
+function renderPhotoSlot(idx,src){
+  const slot=document.getElementById('slot-'+idx);
+  const existing=slot.querySelector('img');
+  if(existing)existing.remove();
+  const img=document.createElement('img');
+  img.src=src;
+  slot.insertBefore(img,slot.firstChild);
+  const icon=slot.querySelector('.photo-slot-icon');
+  const lbl=slot.querySelector('.photo-slot-lbl');
+  if(icon)icon.style.display='none';
+  if(lbl)lbl.style.display='none';
+}
+
+function deletePhoto(e,idx){
+  e.stopPropagation();
+  photoData[idx]=null;
+  const slot=document.getElementById('slot-'+idx);
+  const img=slot.querySelector('img');
+  if(img)img.remove();
+  const icon=slot.querySelector('.photo-slot-icon');
+  const lbl=slot.querySelector('.photo-slot-lbl');
+  if(icon)icon.style.display='';
+  if(lbl)lbl.style.display='';
+  savePendingPhotos();
+  const firstPhoto=photoData.find(p=>p);
+  if(firstPhoto)showPreview(firstPhoto,document.getElementById('r-name').value,document.getElementById('r-access').value);
+  else document.getElementById('preview-wrap').style.display='none';
+}
+
+function savePendingPhotos(){
+  const p=getProfile()||{};
+  p.photos=photoData.slice();
+  setProfile(p);
+}
+
+function updatePreview(){
+  const firstPhoto=photoData.find(p=>p);
+  if(!firstPhoto)return;
+  showPreview(firstPhoto,document.getElementById('r-name').value,document.getElementById('r-access').value);
+}
+
+function showPreview(src,name,access){
+  const wrap=document.getElementById('preview-wrap');
+  const canvas=document.getElementById('preview-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=80,H=142;
+  wrap.style.display='flex';
+  const img=new Image();
+  img.onload=()=>{
+    ctx.clearRect(0,0,W,H);
+    const scale=Math.max(W/img.width,H/img.height);
+    const sw=img.width*scale,sh=img.height*scale;
+    ctx.drawImage(img,(W-sw)/2,(H-sh)/2,sw,sh);
+    const grad=ctx.createLinearGradient(0,H-60,0,H);
+    grad.addColorStop(0,'rgba(0,0,0,0)');
+    grad.addColorStop(0.4,'rgba(0,0,0,0.65)');
+    grad.addColorStop(1,'rgba(0,0,0,0.88)');
+    ctx.fillStyle=grad;
+    ctx.fillRect(0,H-60,W,60);
+    ctx.font='bold 7px sans-serif';ctx.fillStyle='#fff';ctx.textAlign='left';
+    ctx.fillText(name||'店舗名',5,H-40);
+    ctx.font='6px sans-serif';ctx.fillStyle='rgba(255,255,255,0.6)';
+    ctx.fillText(access||'最寄り駅',5,H-30);
+    ctx.font='bold 13px sans-serif';ctx.fillStyle='#f97316';
+    ctx.fillText('8席',5,H-15);
+    ctx.font='6px sans-serif';ctx.fillStyle='rgba(255,255,255,0.7)';ctx.textAlign='right';
+    ctx.fillText('21:00〜',W-5,H-15);
+    ctx.fillStyle='#f97316';
+    ctx.beginPath();ctx.roundRect(5,H-10,W-10,8,4);ctx.fill();
+    ctx.font='bold 5px sans-serif';ctx.fillStyle='#fff';ctx.textAlign='center';
+    ctx.fillText('Googleマップで場所を確認',W/2,H-4);
+  };
+  img.src=src;
+}
+
+const mine=getMyStore();if(mine)renderPublishTab();else renderPublishTab();
+</script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AkiBoard — 飲食店向け空き情報プラットフォーム</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange:#f97316;--orange-dark:#c2640f;--orange-light:#fff7ed;
+    --green:#22c55e;--green-bg:#f0fdf4;
+    --bg:#fafaf8;--surface:#fff;--border:rgba(0,0,0,0.08);
+    --text:#1a1a1a;--muted:#777;--radius:20px;--radius-sm:12px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);padding:0 24px}
+  .nav-inner{max-width:1000px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
+  .logo{font-family:'Montserrat',sans-serif;font-size:20px;font-weight:800;color:var(--orange)}
+  .nav-cta{background:var(--orange);color:#fff;border:none;padding:9px 22px;border-radius:30px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;text-decoration:none;transition:background .15s}
+  .nav-cta:hover{background:var(--orange-dark)}
+
+  /* HERO */
+  .hero{background:linear-gradient(160deg,#1a1a1a 0%,#2d1a0a 100%);padding:80px 24px 90px;text-align:center}
+  .hero-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3);color:var(--orange);font-size:12px;font-weight:500;padding:5px 14px;border-radius:20px;margin-bottom:28px;letter-spacing:.05em}
+  .hero-dot{width:6px;height:6px;border-radius:50%;background:var(--orange);animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+  .hero h1{font-size:clamp(28px,5vw,52px);font-weight:700;color:#fff;line-height:1.25;margin-bottom:20px;letter-spacing:-.01em}
+  .hero h1 span{color:var(--orange)}
+  .hero p{font-size:clamp(14px,2vw,17px);color:rgba(255,255,255,.65);max-width:560px;margin:0 auto 40px;line-height:1.9}
+  .hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .btn-primary{background:var(--orange);color:#fff;padding:15px 36px;border-radius:30px;font-size:15px;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .2s}
+  .btn-primary:hover{background:var(--orange-dark);transform:translateY(-1px)}
+  .btn-ghost{background:transparent;color:rgba(255,255,255,.7);padding:15px 36px;border-radius:30px;font-size:15px;font-weight:500;text-decoration:none;border:1px solid rgba(255,255,255,.2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .2s}
+  .btn-ghost:hover{border-color:rgba(255,255,255,.5);color:#fff}
+
+  /* STATS */
+  .stats{background:var(--surface);border-bottom:1px solid var(--border);padding:32px 24px}
+  .stats-inner{max-width:800px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:24px;text-align:center}
+  .stat-num{font-family:'Montserrat',sans-serif;font-size:32px;font-weight:800;color:var(--orange);display:block}
+  .stat-lbl{font-size:12px;color:var(--muted);margin-top:2px}
+
+  /* SECTION */
+  section{padding:72px 24px}
+  .section-inner{max-width:960px;margin:0 auto}
+  .section-label{font-size:11px;font-weight:600;color:var(--orange);text-transform:uppercase;letter-spacing:.15em;margin-bottom:12px}
+  .section-title{font-size:clamp(22px,3.5vw,36px);font-weight:700;line-height:1.3;margin-bottom:16px}
+  .section-body{font-size:15px;color:var(--muted);line-height:1.9;max-width:600px}
+
+  /* PROBLEM */
+  .problem-bg{background:#faf8f5}
+  .problem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:40px}
+  .problem-card{background:var(--surface);border-radius:var(--radius-sm);border:1px solid var(--border);padding:22px}
+  .problem-icon{font-size:24px;margin-bottom:12px}
+  .problem-card h3{font-size:15px;font-weight:700;margin-bottom:6px}
+  .problem-card p{font-size:13px;color:var(--muted);line-height:1.8}
+
+  /* HOW */
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-top:40px}
+  .step{text-align:center;padding:28px 20px}
+  .step-num{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:var(--orange);letter-spacing:.15em;margin-bottom:14px}
+  .step-icon{width:56px;height:56px;border-radius:16px;background:var(--orange-light);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px}
+  .step h3{font-size:15px;font-weight:700;margin-bottom:8px}
+  .step p{font-size:13px;color:var(--muted);line-height:1.8}
+
+  /* PRICING */
+  .pricing-bg{background:#faf8f5}
+  .free-banner{background:var(--green-bg);border:1px solid #bbf7d0;border-radius:var(--radius-sm);padding:16px 22px;margin-bottom:32px;display:flex;align-items:center;gap:12px}
+  .free-banner-icon{font-size:22px}
+  .free-banner-text h4{font-size:14px;font-weight:700;color:#15803d;margin-bottom:2px}
+  .free-banner-text p{font-size:12px;color:#16a34a}
+
+  .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:0}
+  .plan-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:28px;position:relative;transition:transform .2s}
+  .plan-card:hover{transform:translateY(-3px)}
+  .plan-card.featured{border-color:var(--orange);border-width:2px}
+  .plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--orange);color:#fff;font-size:11px;font-weight:700;padding:4px 14px;border-radius:20px;white-space:nowrap}
+  .plan-name{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em}
+  .plan-price{display:flex;align-items:baseline;gap:4px;margin-bottom:6px}
+  .plan-yen{font-size:16px;font-weight:700;color:var(--text)}
+  .plan-num{font-family:'Montserrat',sans-serif;font-size:36px;font-weight:800;color:var(--text);line-height:1}
+  .plan-per{font-size:13px;color:var(--muted)}
+  .plan-init{font-size:12px;color:var(--muted);margin-bottom:20px}
+  .plan-divider{height:1px;background:var(--border);margin:20px 0}
+  .plan-features{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+  .plan-feat{display:flex;align-items:center;gap:8px;font-size:13px}
+  .feat-check{width:18px;height:18px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .feat-check svg{width:10px;height:10px}
+  .feat-x{width:18px;height:18px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#d1d5db;font-size:12px}
+  .plan-btn{width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;border:none;transition:all .15s}
+  .plan-btn-primary{background:var(--orange);color:#fff}
+  .plan-btn-primary:hover{background:var(--orange-dark)}
+  .plan-btn-ghost{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+  .plan-btn-ghost:hover{background:#f0eeeb}
+
+  /* FLOW */
+  .phase-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:36px}
+  .phase-card{background:var(--surface);border-radius:var(--radius-sm);border:1px solid var(--border);padding:22px}
+  .phase-tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:inline-block;padding:3px 10px;border-radius:20px}
+  .phase-tag.p1{background:#f0fdf4;color:#16a34a}
+  .phase-tag.p2{background:var(--orange-light);color:var(--orange)}
+  .phase-tag.p3{background:#fdf4ff;color:#9333ea}
+  .phase-card h3{font-size:14px;font-weight:700;margin-bottom:6px}
+  .phase-card p{font-size:12px;color:var(--muted);line-height:1.8}
+
+  /* FAQ */
+  .faq-list{display:flex;flex-direction:column;gap:12px;margin-top:32px}
+  .faq-item{background:var(--surface);border-radius:var(--radius-sm);border:1px solid var(--border);padding:20px 22px}
+  .faq-q{font-size:14px;font-weight:700;margin-bottom:8px}
+  .faq-a{font-size:13px;color:var(--muted);line-height:1.8}
+
+  /* CTA */
+  .cta-section{background:linear-gradient(135deg,#1a1a1a,#2d1a0a);padding:80px 24px;text-align:center}
+  .cta-section h2{font-size:clamp(22px,4vw,36px);font-weight:700;color:#fff;margin-bottom:14px}
+  .cta-section p{font-size:15px;color:rgba(255,255,255,.6);margin-bottom:36px;max-width:480px;margin-left:auto;margin-right:auto}
+
+  /* FOOTER */
+  footer{background:#111;padding:32px 24px;text-align:center}
+  footer p{font-size:12px;color:#555}
+  footer span{color:var(--orange)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">AkiBoard</div>
+    <a href="#pricing" class="nav-cta">料金プランを見る</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow"><div class="hero-dot"></div>飲食店向け 空き情報プラットフォーム</div>
+  <h1>「今夜空いてる」を、<br><span>集客に変える。</span></h1>
+  <p>ホットペッパーが取れない「当日の飛び込み需要」を、ワンタップで拾う。平日夜・2次会・深夜の取りこぼしをなくすサービスです。</p>
+  <div class="hero-btns">
+    <a href="#pricing" class="btn-primary">無料で始める →</a>
+    <a href="index.html" class="btn-ghost">お客さん画面を見る</a>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-inner">
+    <div><span class="stat-num">10秒</span><div class="stat-lbl">空き情報の公開にかかる時間</div></div>
+    <div><span class="stat-num">1時間</span><div class="stat-lbl">自動グレーアウトで情報の鮮度を維持</div></div>
+    <div><span class="stat-num">3媒体</span><div class="stat-lbl">LINE・Instagram・Googleに同時配信可能</div></div>
+    <div><span class="stat-num">0円</span><div class="stat-lbl">最初3ヶ月は完全無料</div></div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="problem-bg">
+  <div class="section-inner">
+    <div class="section-label">Problem</div>
+    <h2 class="section-title">こんな悩み、ありませんか？</h2>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">😞</div>
+        <h3>平日の夜が暇すぎる</h3>
+        <p>週末は埋まるのに、火曜・水曜の夜がガラガラ。スタッフが余っているのに席が埋まらない。</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">📱</div>
+        <h3>急な空きを告知できない</h3>
+        <p>キャンセルが出ても知らせる手段がない。InstagramやLINEに投稿しても反応が薄い。</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">💸</div>
+        <h3>ホットペッパーの費用が重い</h3>
+        <p>毎月の掲載費・手数料が積み重なる。でも外せば集客が止まる気がして踏み切れない。</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">🔄</div>
+        <h3>来た客が二度と来ない</h3>
+        <p>一度来てくれても繋がりが切れる。再来店を促す仕組みがなく、いつも新規頼みになる。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section>
+  <div class="section-inner">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">使い方は、たった3ステップ</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">STEP 01</div>
+        <div class="step-icon">🏪</div>
+        <h3>店舗を登録する</h3>
+        <p>店名・エリア・ジャンルを一度入力して保存。次回からは入力不要です。</p>
+      </div>
+      <div class="step">
+        <div class="step-num">STEP 02</div>
+        <div class="step-icon">✅</div>
+        <h3>空き情報をワンタップ公開</h3>
+        <p>席数・時間・一言メモを入れて公開。10秒でお客さん画面に反映されます。</p>
+      </div>
+      <div class="step">
+        <div class="step-num">STEP 03</div>
+        <div class="step-icon">🍺</div>
+        <h3>飛び込み客が来店</h3>
+        <p>「今夜どこか空いてないか」を探しているお客さんに直接リーチ。電話もネット予約も不要。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-bg" id="pricing">
+  <div class="section-inner">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">シンプルな料金プラン</h2>
+    <p class="section-body" style="margin-bottom:28px;">最初の3ヶ月は完全無料。使ってみてから判断してください。</p>
+
+    <div class="free-banner">
+      <div class="free-banner-icon">🎉</div>
+      <div class="free-banner-text">
+        <h4>今なら3ヶ月間 完全無料でお試しいただけます</h4>
+        <p>クレジットカード不要・いつでも解約可能。まずは無料で始めてください。</p>
+      </div>
+    </div>
+
+    <div class="plans">
+      <div class="plan-card">
+        <div class="plan-name">ベーシック</div>
+        <div class="plan-price">
+          <span class="plan-yen">¥</span>
+          <span class="plan-num">3,980</span>
+          <span class="plan-per">/ 月</span>
+        </div>
+        <div class="plan-init">初期登録料 ¥9,800（初回のみ）</div>
+        <div class="plan-divider"></div>
+        <div class="plan-features">
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>空き情報の公開・管理</div>
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>1時間自動グレーアウト</div>
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>4択ステータス管理</div>
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>お客さん一覧ページへの掲載</div>
+          <div class="plan-feat"><div class="feat-x">—</div><span style="color:#ccc;">上位表示</span></div>
+          <div class="plan-feat"><div class="feat-x">—</div><span style="color:#ccc;">月次レポート</span></div>
+        </div>
+        <button class="plan-btn plan-btn-ghost" onclick="alert('デモ版です。実際のサービスでは登録フォームに遷移します。')">無料で始める</button>
+      </div>
+
+      <div class="plan-card featured">
+        <div class="plan-badge">⭐ 人気プラン</div>
+        <div class="plan-name">スタンダード</div>
+        <div class="plan-price">
+          <span class="plan-yen">¥</span>
+          <span class="plan-num">6,980</span>
+          <span class="plan-per">/ 月</span>
+        </div>
+        <div class="plan-init">初期登録料 ¥9,800（初回のみ）</div>
+        <div class="plan-divider"></div>
+        <div class="plan-features">
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>ベーシックの全機能</div>
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>一覧での上位表示</div>
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>「おすすめ」バッジ表示</div>
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>LINE・SNS同時配信機能</div>
+          <div class="plan-feat"><div class="feat-x">—</div><span style="color:#ccc;">月次レポート</span></div>
+          <div class="plan-feat"><div class="feat-x">—</div><span style="color:#ccc;">複数アカウント</span></div>
+        </div>
+        <button class="plan-btn plan-btn-primary" onclick="alert('デモ版です。実際のサービスでは登録フォームに遷移します。')">無料で始める</button>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-name">プレミアム</div>
+        <div class="plan-price">
+          <span class="plan-yen">¥</span>
+          <span class="plan-num">9,980</span>
+          <span class="plan-per">/ 月</span>
+        </div>
+        <div class="plan-init">初期登録料 ¥9,800（初回のみ）</div>
+        <div class="plan-divider"></div>
+        <div class="plan-features">
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>スタンダードの全機能</div>
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>月次アクセスレポート</div>
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>複数アカウント対応</div>
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>専任サポート（AXIA担当）</div>
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>LINE配信シナリオ設計込み</div>
+          <div class="plan-feat"><div class="feat-check"><svg viewBox="0 0 10 8"><polyline points="1,4 3.5,6.5 9,1" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>月次改善提案レポート</div>
+        </div>
+        <button class="plan-btn plan-btn-ghost" onclick="alert('デモ版です。実際のサービスでは登録フォームに遷移します。')">無料で始める</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PHASE -->
+<section>
+  <div class="section-inner">
+    <div class="section-label">Business Model</div>
+    <h2 class="section-title">段階的に収益を拡大する設計</h2>
+    <p class="section-body">まずエリアに密度を作り、使われるサービスにしてから有料化します。</p>
+    <div class="phase-grid">
+      <div class="phase-card">
+        <span class="phase-tag p1">Phase 1 / 0〜3ヶ月</span>
+        <h3>無料で密度をつくる</h3>
+        <p>梅田エリアで20店舗を先に確保。お客さんが「使える」と感じる密度を作ることが最優先。</p>
+      </div>
+      <div class="phase-card">
+        <span class="phase-tag p2">Phase 2 / 4ヶ月目〜</span>
+        <h3>有料化・月額収益化</h3>
+        <p>無料期間終了後に月額プランへ移行。「使ってよかった」店舗の継続率を高める。新規登録は最初から有料。</p>
+      </div>
+      <div class="phase-card">
+        <span class="phase-tag p3">Phase 3 / 安定後</span>
+        <h3>エリア拡大・機能拡充</h3>
+        <p>難波・天王寺へエリア拡大。上位表示・分析機能・LINE連携などのオプションで単価を引き上げる。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="pricing-bg">
+  <div class="section-inner">
+    <div class="section-label">FAQ</div>
+    <h2 class="section-title">よくある質問</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">ホットペッパーと何が違うんですか？</div>
+        <div class="faq-a">ホットペッパーは「事前予約」に強いサービスです。AkiBoardは「今夜・今から」という当日の飛び込み需要に特化しています。両方使うことで、予約客と飛び込み客の両方を取れる状態になります。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">操作が難しくないですか？</div>
+        <div class="faq-a">最初に店舗情報を登録すれば、あとは空き席数・時間・一言メモを入れてボタンを押すだけです。慣れると10秒以内に公開できます。スマホのみで完結します。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">情報が古いまま残ってしまいませんか？</div>
+        <div class="faq-a">公開から1時間経過すると自動でグレーアウトされ、お客さん側に「情報が古い可能性があります」と表示されます。「まだ空いてます」ボタンを押すだけで1時間延長できます。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">解約はいつでもできますか？</div>
+        <div class="faq-a">いつでも解約可能です。違約金や解約手数料は一切ありません。まずは3ヶ月の無料期間でお試しください。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2>まず、無料で試してみてください</h2>
+  <p>登録は5分。クレジットカード不要。3ヶ月間は完全無料でお使いいただけます。</p>
+  <a href="store.html" class="btn-primary" style="display:inline-block;">今すぐ無料登録する →</a>
+</div>
+
+<footer>
+  <p>© 2026 <span>AkiBoard</span> by AXIA　／　<a href="store.html" style="color:var(--orange);text-decoration:none;">店舗管理</a>　／　<a href="index.html" style="color:var(--orange);text-decoration:none;">お客さん画面</a></p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AkiBoard — 今夜の空き、すぐわかる</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #f97316;
+    --orange-light: #fff7ed;
+    --green: #22c55e;
+    --green-bg: #f0fdf4;
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.07);
+    --text: #1a1a1a;
+    --muted: #888;
+    --radius: 18px;
+    --radius-sm: 10px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Noto Sans JP',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  /* HEADER */
+  header {
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:0 20px;
+    position:sticky; top:0; z-index:100;
+  }
+  .header-inner {
+    max-width:600px; margin:0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    height:56px;
+  }
+  .logo {
+    font-family:'Montserrat',sans-serif;
+    font-size:18px; font-weight:800;
+    color:var(--orange); letter-spacing:0.02em;
+  }
+  .live-pill {
+    display:flex; align-items:center; gap:6px;
+    background:var(--green-bg); border-radius:20px;
+    padding:5px 12px;
+    font-size:12px; font-weight:500; color:var(--green);
+  }
+  .live-dot {
+    width:7px; height:7px; border-radius:50%;
+    background:var(--green);
+    animation:pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:0.5;transform:scale(1.4)}
+  }
+
+  /* BODY */
+  .body { max-width:600px; margin:0 auto; padding:20px; }
+
+  /* HERO */
+  .hero { margin-bottom:20px; }
+  .hero h1 { font-size:22px; font-weight:700; margin-bottom:4px; }
+  .hero p { font-size:13px; color:var(--muted); }
+
+  /* FILTERS */
+  .filters {
+    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;
+    overflow-x:auto; padding-bottom:4px;
+  }
+  .filter-btn {
+    padding:7px 16px; border-radius:20px;
+    font-size:13px; font-weight:500;
+    border:1px solid var(--border);
+    background:var(--surface); cursor:pointer;
+    color:var(--muted); white-space:nowrap;
+    transition:all 0.15s; font-family:'Noto Sans JP',sans-serif;
+  }
+  .filter-btn.active { background:var(--orange); color:#fff; border-color:var(--orange); }
+
+  /* STORE CARD */
+  .store-list { display:flex; flex-direction:column; gap:14px; }
+  .store-card {
+    background:var(--surface);
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    overflow:hidden; position:relative;
+    animation:slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from{opacity:0;transform:translateY(8px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+  .card-main { padding:16px 16px 0; display:flex; align-items:flex-start; gap:12px; }
+  .store-icon {
+    width:50px; height:50px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px; flex-shrink:0;
+  }
+  .store-info { flex:1; }
+  .store-name { font-size:16px; font-weight:700; margin-bottom:3px; }
+  .store-area { font-size:12px; color:var(--muted); }
+  .seat-box {
+    text-align:center; flex-shrink:0;
+  }
+  .seat-num {
+    font-size:28px; font-weight:700; color:var(--orange);
+    line-height:1; display:block;
+  }
+  .seat-lbl { font-size:10px; color:var(--muted); }
+
+  .card-tags { padding:10px 16px; display:flex; gap:6px; flex-wrap:wrap; }
+  .tag {
+    padding:4px 10px; border-radius:6px;
+    font-size:11px; font-weight:500;
+  }
+  .tag-status-open   { background:#f0fdf4; color:#16a34a; }
+  .tag-status-some   { background:#fff7ed; color:#ea580c; }
+  .tag-status-few    { background:#fef2f2; color:#dc2626; }
+  .tag-default       { background:var(--bg); color:var(--muted); }
+  .tag-memo          { background:#fff7ed; color:#ea580c; }
+  .tag-time          { background:var(--bg); color:var(--muted); }
+
+  .card-footer {
+    padding:10px 16px 14px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-top:1px solid var(--border); margin-top:4px;
+  }
+  .updated-ago { font-size:11px; color:#bbb; }
+  .contact-btn {
+    background:var(--orange); color:#fff; border:none;
+    padding:8px 18px; border-radius:10px;
+    font-size:12px; font-weight:500; cursor:pointer;
+    font-family:'Noto Sans JP',sans-serif; transition:background 0.15s;
+  }
+  .contact-btn:hover { background:#c2640f; }
+
+  /* STALE */
+  .stale-overlay {
+    position:absolute; inset:0;
+    background:rgba(245,244,240,0.9);
+    border-radius:var(--radius);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:6px;
+  }
+  .stale-title { font-size:14px; font-weight:500; color:#888; }
+  .stale-sub   { font-size:11px; color:#bbb; }
+
+  /* EMPTY */
+  .empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+  .empty-state .icon { font-size:40px; margin-bottom:12px; }
+  .empty-state p { font-size:14px; }
+
+  /* FOOTER */
+  .footer-bar {
+    text-align:center; font-size:11px; color:#bbb;
+    padding:20px 0 32px; margin-top:8px;
+  }
+  .footer-bar a { color:var(--orange); text-decoration:none; font-weight:500; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">AkiBoard</div>
+    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+  </div>
+</header>
+
+<div class="body">
+  <div class="hero">
+    <h1>今夜空いてるお店 <span id="live-count" style="font-size:16px;color:var(--muted);font-weight:400;"></span></h1>
+    <p>リアルタイムで更新中。飛び込みOKのお店を探そう。</p>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all',this)">すべて</button>
+    <button class="filter-btn" onclick="setFilter('izakaya',this)">🍺 居酒屋</button>
+    <button class="filter-btn" onclick="setFilter('restaurant',this)">🍽 レストラン</button>
+    <button class="filter-btn" onclick="setFilter('bar',this)">🥂 バー</button>
+    <button class="filter-btn" onclick="setFilter('ramen',this)">🍜 ラーメン</button>
+    <button class="filter-btn" onclick="setFilter('cafe',this)">☕ カフェ</button>
+  </div>
+
+  <div class="store-list" id="store-list"></div>
+
+  <div class="footer-bar">
+    最終確認：<span id="updated-label">--:--</span>　／　
+    お店のオーナーの方は<a href="store.html">こちら</a>から空き情報を登録できます。
+  </div>
+</div>
+
+<script>
+const GENRE_ICONS  = {izakaya:'🍺',restaurant:'🍽',bar:'🥂',ramen:'🍜',cafe:'☕',other:'🍴'};
+const GENRE_LABELS = {izakaya:'居酒屋',restaurant:'レストラン',bar:'バー',ramen:'ラーメン',cafe:'カフェ',other:'その他'};
+const STATUS_LABEL = {open:'◎ 余裕あり',some:'○ 空きあり',few:'△ 残りわずか'};
+const STATUS_CLASS = {open:'tag-status-open',some:'tag-status-some',few:'tag-status-few'};
+const STALE_MS = 60 * 60 * 1000;
+let currentFilter = 'all';
+
+const seedStores = [
+  {id:'s1',name:'炭火焼 一穂',area:'梅田',genre:'izakaya',seats:6,from:'21:00',to:'26:00',memo:'個室3部屋・飲み放題2,980円',ts:Date.now()-5*60000,status:'open',refreshedAt:Date.now()-5*60000},
+  {id:'s2',name:'立飲み屋 角打ち',area:'難波',genre:'bar',seats:12,from:'20:00',to:'27:00',memo:'2次会・3次会歓迎',ts:Date.now()-45*60000,status:'some',refreshedAt:Date.now()-45*60000},
+  {id:'s3',name:'麺屋 黒帯',area:'天王寺',genre:'ramen',seats:4,from:'21:00',to:'25:00',memo:'',ts:Date.now()-20*60000,status:'few',refreshedAt:Date.now()-20*60000},
+];
+
+function getStores() {
+  try {
+    const raw = localStorage.getItem('akiboard_stores');
+    const user = raw ? JSON.parse(raw) : [];
+    return [...user, ...seedStores];
+  } catch(e) { return [...seedStores]; }
+}
+
+function isStale(s) { return (Date.now()-(s.refreshedAt||s.ts)) >= STALE_MS; }
+
+function timeAgo(ts) {
+  const d = Math.floor((Date.now()-ts)/60000);
+  if (d < 1) return 'たった今';
+  if (d < 60) return d+'分前';
+  return Math.floor(d/60)+'時間前';
+}
+
+function genreBg(g) {
+  return {izakaya:'#fff7ed',restaurant:'#f0fdf4',bar:'#fdf4ff',ramen:'#fef2f2',cafe:'#fffbeb',other:'#f8fafc'}[g]||'#f8fafc';
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setFilter(f,el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function render() {
+  const stores = getStores().filter(s =>
+    s.status !== 'closed' &&
+    (currentFilter === 'all' || s.genre === currentFilter)
+  );
+  const list = document.getElementById('store-list');
+  document.getElementById('live-count').textContent = stores.length+'件';
+
+  if (!stores.length) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>該当するお店が見つかりません</p></div>';
+    return;
+  }
+
+  list.innerHTML = stores.map(s => {
+    const stale = isStale(s);
+    const statusCls = STATUS_CLASS[s.status||'open'] || 'tag-default';
+    const statusLbl = STATUS_LABEL[s.status||'open'] || '';
+    return `
+    <div class="store-card">
+      <div class="card-main">
+        <div class="store-icon" style="background:${genreBg(s.genre)}">${GENRE_ICONS[s.genre]||'🍴'}</div>
+        <div class="store-info">
+          <div class="store-name">${esc(s.name)}</div>
+          <div class="store-area">${esc(s.area)}　${GENRE_LABELS[s.genre]||s.genre}</div>
+        </div>
+        <div class="seat-box">
+          <span class="seat-num">${s.seats}</span>
+          <span class="seat-lbl">席あり</span>
+        </div>
+      </div>
+      <div class="card-tags">
+        ${statusLbl ? `<span class="tag ${statusCls}">${statusLbl}</span>` : ''}
+        <span class="tag tag-time">${esc(s.from)}〜${esc(s.to)}</span>
+        ${s.memo ? `<span class="tag tag-memo">${esc(s.memo.substring(0,24))}${s.memo.length>24?'…':''}</span>` : ''}
+      </div>
+      <div class="card-footer">
+        <span class="updated-ago">${timeAgo(s.refreshedAt||s.ts)}に更新</span>
+        <button class="contact-btn" onclick="alert('デモ版です。\\n実際のサービスではLINEまたは電話に繋がります。')">問い合わせる</button>
+      </div>
+      ${stale ? `<div class="stale-overlay"><div class="stale-title">⚠ 情報が古い可能性があります</div><div class="stale-sub">更新から1時間以上経過しています</div></div>` : ''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('updated-label').textContent =
+    new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+}
+
+render();
+setInterval(render, 30000);
+</script>
+</body>
+</html>
