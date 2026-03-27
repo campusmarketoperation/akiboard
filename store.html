@@ -58,10 +58,12 @@
   input[type=text],select,textarea{width:100%;padding:10px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;-webkit-appearance:none}
   input:focus,select:focus,textarea:focus{border-color:var(--orange);background:#fff}
   textarea{resize:vertical;min-height:68px}
-  .seat-row{display:flex;align-items:center;gap:12px}
-  .seat-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:22px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .table-grid{display:flex;flex-direction:column;gap:10px}
+  .table-row{display:flex;align-items:center;gap:10px}
+  .table-label{font-size:13px;color:var(--text);min-width:90px;font-weight:500}
+  .seat-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-size:18px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
   .seat-btn:hover{background:var(--orange-light);border-color:var(--orange)}
-  .seat-num{font-size:30px;font-weight:700;color:var(--orange);min-width:44px;text-align:center}
+  .seat-num{font-size:22px;font-weight:700;color:var(--orange);min-width:32px;text-align:center}
   .seat-unit{font-size:13px;color:var(--muted)}
   .genre-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   .genre-btn{padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:12px;font-weight:500;cursor:pointer;text-align:center;font-family:'Noto Sans JP',sans-serif;color:var(--muted);transition:all .15s}
@@ -129,12 +131,36 @@
       <div class="form-card">
         <h3>今夜の空き状況</h3>
         <div class="form-row">
-          <label>空き席数</label>
-          <div class="seat-row">
-            <button class="seat-btn" onclick="changeSeat(-1)">−</button>
-            <div class="seat-num" id="seat-display">8</div>
-            <button class="seat-btn" onclick="changeSeat(1)">+</button>
-            <span class="seat-unit">席</span>
+          <label>席の種類と卓数</label>
+          <div class="table-grid">
+            <div class="table-row">
+              <span class="table-label">2名席</span>
+              <button class="seat-btn" onclick="changeTable('t2',-1)">−</button>
+              <div class="seat-num" id="t2-display">0</div>
+              <button class="seat-btn" onclick="changeTable('t2',1)">+</button>
+              <span class="seat-unit">卓</span>
+            </div>
+            <div class="table-row">
+              <span class="table-label">4名席</span>
+              <button class="seat-btn" onclick="changeTable('t4',-1)">−</button>
+              <div class="seat-num" id="t4-display">2</div>
+              <button class="seat-btn" onclick="changeTable('t4',1)">+</button>
+              <span class="seat-unit">卓</span>
+            </div>
+            <div class="table-row">
+              <span class="table-label">6名以上</span>
+              <button class="seat-btn" onclick="changeTable('t6',-1)">−</button>
+              <div class="seat-num" id="t6-display">0</div>
+              <button class="seat-btn" onclick="changeTable('t6',1)">+</button>
+              <span class="seat-unit">卓</span>
+            </div>
+            <div class="table-row">
+              <span class="table-label">カウンター</span>
+              <button class="seat-btn" onclick="changeTable('tc',-1)">−</button>
+              <div class="seat-num" id="tc-display">0</div>
+              <button class="seat-btn" onclick="changeTable('tc',1)">+</button>
+              <span class="seat-unit">席</span>
+            </div>
           </div>
         </div>
         <div class="form-row">
@@ -243,7 +269,7 @@
 const GENRE_ICONS={izakaya:'🍺',restaurant:'🍽',bar:'🥂',ramen:'🍜',cafe:'☕',other:'🍴'};
 const GENRE_LABELS={izakaya:'居酒屋',restaurant:'レストラン',bar:'バー',ramen:'ラーメン',cafe:'カフェ',other:'その他'};
 const STALE_MS=60*60*1000;
-let seats=8,selectedGenre='izakaya',timerInterval=null;
+let tables={t2:0,t4:2,t6:0,tc:0},selectedGenre='izakaya',timerInterval=null;
 
 function getProfile(){try{return JSON.parse(localStorage.getItem('akiboard_profile')||'null')}catch(e){return null}}
 function setProfile(p){localStorage.setItem('akiboard_profile',JSON.stringify(p))}
@@ -336,7 +362,7 @@ function publish(){
   const from=document.getElementById('f-from').value;
   const to=document.getElementById('f-to').value;
   const memo=document.getElementById('f-memo').value.trim();
-  const store={id:'user_'+Date.now(),name:p.name,area:p.area,genre:p.genre,seats,from,to,memo,ts:Date.now(),refreshedAt:Date.now(),status:'open'};
+  const store={id:'user_'+Date.now(),name:p.name,area:p.area,genre:p.genre,tables,from,to,memo,ts:Date.now(),refreshedAt:Date.now(),status:'open'};
   saveStore(store);setMyStore(store);
   const btn=document.getElementById('publish-btn');
   btn.textContent='公開しました！';btn.style.background='#22c55e';
@@ -382,7 +408,8 @@ function startTimer(refreshedAt){
   tick();timerInterval=setInterval(tick,30000);
 }
 
-function changeSeat(d){seats=Math.max(1,Math.min(99,seats+d));document.getElementById('seat-display').textContent=seats}
+function changeTable(key,d){tables[key]=Math.max(0,Math.min(20,(tables[key]||0)+d));document.getElementById(key+'-display').textContent=tables[key]}
+function restoreTableInputs(t){if(!t)return;tables=Object.assign({t2:0,t4:0,t6:0,tc:0},t);['t2','t4','t6','tc'].forEach(k=>{const el=document.getElementById(k+'-display');if(el)el.textContent=tables[k]||0})}
 function selectGenre(el,g){selectedGenre=g;document.querySelectorAll('.genre-btn').forEach(b=>b.classList.remove('selected'));el.classList.add('selected');updatePreview()}
 
 let currentSlot=0;

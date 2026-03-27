@@ -101,11 +101,11 @@
   .store-name { font-size:16px; font-weight:700; margin-bottom:3px; }
   .store-area { font-size:12px; color:var(--muted); }
   .seat-box {
-    text-align:center; flex-shrink:0;
+    text-align:right; flex-shrink:0;
   }
   .seat-num {
-    font-size:28px; font-weight:700; color:var(--orange);
-    line-height:1; display:block;
+    font-size:13px; font-weight:700; color:var(--orange);
+    line-height:1.6; display:block; white-space:nowrap;
   }
   .seat-lbl { font-size:10px; color:var(--muted); }
 
@@ -199,10 +199,20 @@ const STATUS_CLASS = {open:'tag-status-open',some:'tag-status-some',few:'tag-sta
 const STALE_MS = 60 * 60 * 1000;
 let currentFilter = 'all';
 
+function formatTables(tables, fallbackSeats) {
+  if (!tables) return fallbackSeats ? fallbackSeats + '席' : '—';
+  const labels = {t2:'2名席',t4:'4名席',t6:'6名以上',tc:'カウンター'};
+  const units  = {t2:'卓',t4:'卓',t6:'卓',tc:'席'};
+  const parts = Object.entries(tables)
+    .filter(([,v]) => v > 0)
+    .map(([k,v]) => `${labels[k]} ${v}${units[k]}`);
+  return parts.length ? parts.join('\n') : '—';
+}
+
 const seedStores = [
-  {id:'s1',name:'炭火焼 一穂',area:'梅田',genre:'izakaya',seats:6,from:'21:00',to:'26:00',memo:'個室3部屋・飲み放題2,980円',ts:Date.now()-5*60000,status:'open',refreshedAt:Date.now()-5*60000},
-  {id:'s2',name:'立飲み屋 角打ち',area:'難波',genre:'bar',seats:12,from:'20:00',to:'27:00',memo:'2次会・3次会歓迎',ts:Date.now()-45*60000,status:'some',refreshedAt:Date.now()-45*60000},
-  {id:'s3',name:'麺屋 黒帯',area:'天王寺',genre:'ramen',seats:4,from:'21:00',to:'25:00',memo:'',ts:Date.now()-20*60000,status:'few',refreshedAt:Date.now()-20*60000},
+  {id:'s1',name:'炭火焼 一穂',area:'梅田',genre:'izakaya',tables:{t2:2,t4:1,t6:0,tc:0},from:'21:00',to:'26:00',memo:'個室3部屋・飲み放題2,980円',ts:Date.now()-5*60000,status:'open',refreshedAt:Date.now()-5*60000},
+  {id:'s2',name:'立飲み屋 角打ち',area:'難波',genre:'bar',tables:{t2:0,t4:0,t6:0,tc:8},from:'20:00',to:'27:00',memo:'2次会・3次会歓迎',ts:Date.now()-45*60000,status:'some',refreshedAt:Date.now()-45*60000},
+  {id:'s3',name:'麺屋 黒帯',area:'天王寺',genre:'ramen',tables:{t2:2,t4:0,t6:0,tc:0},from:'21:00',to:'25:00',memo:'',ts:Date.now()-20*60000,status:'few',refreshedAt:Date.now()-20*60000},
 ];
 
 function getStores() {
@@ -263,8 +273,8 @@ function render() {
           <div class="store-area">${esc(s.area)}　${GENRE_LABELS[s.genre]||s.genre}</div>
         </div>
         <div class="seat-box">
-          <span class="seat-num">${s.seats}</span>
-          <span class="seat-lbl">席あり</span>
+          <span class="seat-num" id="seat-${s.id}">${formatTables(s.tables,s.seats)}</span>
+          <span class="seat-lbl">空き</span>
         </div>
       </div>
       <div class="card-tags">
