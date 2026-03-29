@@ -210,9 +210,9 @@ function formatTables(tables, fallbackSeats) {
 }
 
 const seedStores = [
-  {id:'s1',name:'炭火焼 一穂',area:'梅田',genre:'izakaya',tables:{t2:2,t4:1,t6:0,tc:0},from:'21:00',to:'26:00',memo:'個室3部屋・飲み放題2,980円',ts:Date.now()-5*60000,status:'open',refreshedAt:Date.now()-5*60000},
-  {id:'s2',name:'立飲み屋 角打ち',area:'難波',genre:'bar',tables:{t2:0,t4:0,t6:0,tc:8},from:'20:00',to:'27:00',memo:'2次会・3次会歓迎',ts:Date.now()-45*60000,status:'some',refreshedAt:Date.now()-45*60000},
-  {id:'s3',name:'麺屋 黒帯',area:'天王寺',genre:'ramen',tables:{t2:2,t4:0,t6:0,tc:0},from:'21:00',to:'25:00',memo:'',ts:Date.now()-20*60000,status:'few',refreshedAt:Date.now()-20*60000},
+  {id:'s1',name:'炭火焼 一穂',area:'梅田',genre:'izakaya',tables:{t2:2,t4:1,t6:0,tc:0},from:'21:00',to:'26:00',memo:'個室3部屋・飲み放題2,980円',ts:Date.now()-5*60000,status:'open',refreshedAt:Date.now()-5*60000,mapurl:'https://maps.google.com/maps?q=梅田+居酒屋'},
+  {id:'s2',name:'立飲み屋 角打ち',area:'難波',genre:'bar',tables:{t2:0,t4:0,t6:0,tc:8},from:'20:00',to:'27:00',memo:'2次会・3次会歓迎',ts:Date.now()-45*60000,status:'some',refreshedAt:Date.now()-45*60000,mapurl:'https://maps.google.com/maps?q=難波+バー'},
+  {id:'s3',name:'麺屋 黒帯',area:'天王寺',genre:'ramen',tables:{t2:2,t4:0,t6:0,tc:0},from:'21:00',to:'25:00',memo:'',ts:Date.now()-20*60000,status:'few',refreshedAt:Date.now()-20*60000,mapurl:'https://maps.google.com/maps?q=天王寺+ラーメン'},
 ];
 
 function getStores() {
@@ -284,7 +284,10 @@ function render() {
       </div>
       <div class="card-footer">
         <span class="updated-ago">${timeAgo(s.refreshedAt||s.ts)}に更新</span>
-        <button class="contact-btn" onclick="alert('デモ版です。\\n実際のサービスではLINEまたは電話に繋がります。')">問い合わせる</button>
+        <a class="contact-btn" href="${s.mapurl || 'https://maps.google.com/maps?q=' + encodeURIComponent((s.name||'') + ' ' + (s.area||''))}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1C4.01 1 2 3.01 2 5.5c0 3.375 4.5 6.5 4.5 6.5s4.5-3.125 4.5-6.5C11 3.01 8.99 1 6.5 1zm0 6.5a2 2 0 110-4 2 2 0 010 4z" fill="white"/></svg>
+          経路を見る
+        </a>
       </div>
       ${stale ? `<div class="stale-overlay"><div class="stale-title">⚠ 情報が古い可能性があります</div><div class="stale-sub">更新から1時間以上経過しています</div></div>` : ''}
     </div>`;
