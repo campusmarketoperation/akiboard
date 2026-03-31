@@ -69,6 +69,8 @@
   .status-btn.sel-closed{background:#f3f4f6;color:#6b7280;border-color:#d1d5db}
   .extend-btn{width:100%;padding:13px;background:var(--green-bg);color:#16a34a;border:1.5px solid #86efac;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .15s}
   .extend-btn:hover{background:#dcfce7}
+  .instagram-btn{width:100%;padding:13px;background:linear-gradient(135deg,#f97316,#e1306c);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:opacity .15s}
+  .instagram-btn:hover{opacity:.9}
   .stop-btn{width:100%;padding:10px;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--muted);cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:background .15s}
   .stop-btn:hover{background:var(--bg)}
   .form-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:20px;margin-bottom:14px}
@@ -212,6 +214,8 @@
           </div>
         </div>
         <button class="extend-btn" onclick="extendTimer()">✓ まだ空いてます（1時間延長）</button>
+        <button class="instagram-btn" onclick="copyInstagram()">📱 Instagramの投稿文をコピー</button>
+        <div id="copy-notice" style="display:none;background:var(--green-bg);border:1px solid #bbf7d0;border-radius:var(--radius-sm);padding:10px;font-size:12px;color:#15803d;text-align:center;">✓ コピーしました！Instagramに貼り付けてください</div>
         <button class="stop-btn" onclick="unpublish()">公開を取り消す</button>
       </div>
     </div>
@@ -452,6 +456,18 @@ function publish(){
   const memo=document.getElementById('f-memo').value.trim();
   const store={id:'user_'+Date.now(),name:p.name,area:p.area,genre:p.genre,mapurl:p.mapurl||'',access:p.access||'',tables,from,to,memo,ts:Date.now(),refreshedAt:Date.now(),status:'open'};
   saveStore(store);setMyStore(store);
+
+  // Make Webhookに通知
+  const LABELS={t2:'2名席',t4:'4名席',t6:'6名以上',tc:'カウンター'};
+  const UNITS={t2:'卓',t4:'卓',t6:'卓',tc:'席'};
+  const tableText=tables?Object.entries(tables).filter(([,v])=>v>0).map(([k,v])=>`${LABELS[k]} ${v}${UNITS[k]}`).join(' / '):'';
+  const caption=`【今夜の空き情報🍺】\n\n${p.name}（${p.area}）\n\n${tableText?tableText+'\n':''}◎ 余裕あり\n🕐 ${from}〜${to}まで受付中${memo?'\n✨ '+memo:''}${p.mapurl?'\n📍 '+p.mapurl:''}\n\n▶ 空き情報はこちら\nhttps://akiboard.jp\n\n#梅田居酒屋 #大阪居酒屋 #今夜の梅田 #飲み歩き大阪 #AkiBoard`;
+  fetch('https://hook.eu1.make.com/nhbflgiciv3fa8d9lnehrtuhmr43r6l8',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:p.name,area:p.area,from,to,memo,tableText,caption,mapurl:p.mapurl||'',ts:new Date().toLocaleString('ja-JP')})
+  }).catch(e=>console.warn('Webhook error:',e));
+
   const btn=document.getElementById('publish-btn');
   btn.textContent='公開しました！';btn.style.background='#22c55e';
   setTimeout(()=>{btn.style.background='';renderPublishTab()},700);
@@ -496,7 +512,44 @@ function startTimer(refreshedAt){
   tick();timerInterval=setInterval(tick,30000);
 }
 
-function changeTable(key,d){tables[key]=Math.max(0,Math.min(20,(tables[key]||0)+d));document.getElementById(key+'-display').textContent=tables[key]}
+function copyInstagram() {
+  const mine = getMyStore(); if (!mine) return;
+  const p = getProfile();
+  const LABELS = {t2:'2名席',t4:'4名席',t6:'6名以上',tc:'カウンター'};
+  const UNITS  = {t2:'卓',t4:'卓',t6:'卓',tc:'席'};
+  const STATUS = {open:'◎ 余裕あり',some:'○ 空きあり',few:'△ 残りわずか'};
+
+  const tableLines = mine.tables
+    ? Object.entries(mine.tables).filter(([,v])=>v>0)
+        .map(([k,v])=>`🪑 ${LABELS[k]} ${v}${UNITS[k]}`).join('\n')
+    : `🪑 ${mine.seats}席`;
+
+  const statusLine = STATUS[mine.status] || '○ 空きあり';
+  const memoLine = mine.memo ? `\n✨ ${mine.memo}` : '';
+  const mapLine = (p && p.mapurl) ? `\n📍 ${p.mapurl}` : '';
+
+  const text = `【今夜の空き情報🍺】
+
+${mine.name}（${mine.area}）
+
+${tableLines}
+${statusLine}
+🕐 ${mine.from}〜${mine.to}まで受付中${memoLine}
+${mapLine}
+
+▶ 空き情報はこちら
+https://akiboard.jp
+
+#梅田居酒屋 #大阪居酒屋 #今夜の梅田 #飲み歩き大阪 #AkiBoard`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const notice = document.getElementById('copy-notice');
+    notice.style.display = 'block';
+    setTimeout(() => { notice.style.display = 'none'; }, 3000);
+  }).catch(() => {
+    alert('コピーに失敗しました。手動でコピーしてください。\n\n' + text);
+  });
+}
 function restoreTableInputs(t){if(!t)return;tables=Object.assign({t2:0,t4:0,t6:0,tc:0},t);['t2','t4','t6','tc'].forEach(k=>{const el=document.getElementById(k+'-display');if(el)el.textContent=tables[k]||0})}
 function selectGenre(el,g){selectedGenre=g;document.querySelectorAll('.genre-btn').forEach(b=>b.classList.remove('selected'));el.classList.add('selected');updatePreview()}
 
