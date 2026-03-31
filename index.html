@@ -226,9 +226,8 @@ const seedStores = [
 function getStores() {
   try {
     const raw = localStorage.getItem('akiboard_stores');
-    const user = raw ? JSON.parse(raw) : [];
-    return [...user, ...seedStores];
-  } catch(e) { return [...seedStores]; }
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
 }
 
 function isStale(s) { return (Date.now()-(s.refreshedAt||s.ts)) >= STALE_MS; }
