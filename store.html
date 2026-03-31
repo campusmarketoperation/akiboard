@@ -450,7 +450,7 @@ function publish(){
   const from=document.getElementById('f-from').value;
   const to=document.getElementById('f-to').value;
   const memo=document.getElementById('f-memo').value.trim();
-  const store={id:'user_'+Date.now(),name:p.name,area:p.area,genre:p.genre,tables,from,to,memo,ts:Date.now(),refreshedAt:Date.now(),status:'open'};
+  const store={id:'user_'+Date.now(),name:p.name,area:p.area,genre:p.genre,mapurl:p.mapurl||'',access:p.access||'',tables,from,to,memo,ts:Date.now(),refreshedAt:Date.now(),status:'open'};
   saveStore(store);setMyStore(store);
   const btn=document.getElementById('publish-btn');
   btn.textContent='公開しました！';btn.style.background='#22c55e';

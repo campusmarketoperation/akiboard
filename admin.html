@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AkiBoard — 管理画面</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --orange:#f97316;--orange-dark:#c2640f;--orange-light:#fff7ed;
+    --green:#22c55e;--green-bg:#f0fdf4;--red:#ef4444;--red-bg:#fef2f2;
+    --blue:#3b82f6;--blue-bg:#eff6ff;
+    --bg:#f5f4f0;--surface:#fff;--border:rgba(0,0,0,0.08);
+    --text:#1a1a1a;--muted:#888;--radius:16px;--radius-sm:10px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+  /* LOGIN */
+  .login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+  .login-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:32px 28px;width:100%;max-width:360px}
+  .login-logo{font-family:'Montserrat',sans-serif;font-size:20px;font-weight:800;color:var(--orange);text-align:center;margin-bottom:4px}
+  .login-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:28px}
+  .login-label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px}
+  .login-input{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:var(--bg);outline:none;margin-bottom:14px;-webkit-appearance:none}
+  .login-input:focus{border-color:var(--orange);background:#fff}
+  .login-btn{width:100%;padding:13px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+  .login-err{font-size:12px;color:var(--red);text-align:center;margin-top:10px;display:none}
+
+  /* APP */
+  .app{display:none}
+  .app.active{display:block}
+
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100}
+  .header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px}
+  .logo{font-family:'Montserrat',sans-serif;font-size:18px;font-weight:800;color:var(--orange)}
+  .logo-badge{font-size:10px;background:var(--orange);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px;font-weight:600;vertical-align:middle}
+  .logout-btn{font-size:12px;color:var(--muted);background:none;border:1px solid var(--border);padding:6px 14px;border-radius:20px;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+  .logout-btn:hover{color:var(--text);border-color:var(--text)}
+
+  .body{max-width:1100px;margin:0 auto;padding:28px 24px}
+
+  /* STATS */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px}
+  .stat-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:20px}
+  .stat-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+  .stat-num{font-family:'Montserrat',sans-serif;font-size:32px;font-weight:800;line-height:1}
+  .stat-num.orange{color:var(--orange)}
+  .stat-num.green{color:var(--green)}
+  .stat-num.blue{color:var(--blue)}
+  .stat-num.red{color:var(--red)}
+
+  /* SECTION */
+  .section{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:20px}
+  .section-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .section-title{font-size:14px;font-weight:700}
+  .section-sub{font-size:12px;color:var(--muted)}
+  .refresh-btn{font-size:12px;color:var(--orange);background:none;border:1px solid var(--orange);padding:5px 12px;border-radius:20px;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+
+  /* LIVE STORES */
+  .live-list{padding:14px 20px;display:flex;flex-direction:column;gap:10px}
+  .live-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--green-bg);border:1px solid #bbf7d0;border-radius:var(--radius-sm)}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite;flex-shrink:0}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+  .live-name{font-size:13px;font-weight:700;flex:1}
+  .live-status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+  .s-open{background:#dcfce7;color:#15803d}
+  .s-some{background:#fff7ed;color:#c2640f}
+  .s-few{background:#fef2f2;color:#dc2626}
+  .live-seats{font-size:12px;color:var(--muted)}
+  .live-time{font-size:11px;color:var(--muted)}
+  .empty-msg{padding:24px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse}
+  th{background:#f9f8f5;padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#fafaf8}
+  .code-badge{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;background:var(--orange-light);color:var(--orange);padding:3px 10px;border-radius:20px}
+  .date-text{font-size:12px;color:var(--muted)}
+  .delete-btn{font-size:11px;color:var(--red);background:none;border:1px solid #fca5a5;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+  .delete-btn:hover{background:var(--red-bg)}
+  .search-input{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:var(--bg);outline:none;width:200px}
+  .search-input:focus{border-color:var(--orange);background:#fff}
+</style>
+</head>
+<body>
+
+<!-- ログイン -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">AkiBoard</div>
+    <div class="login-sub">運営管理画面</div>
+    <label class="login-label">管理者パスワード</label>
+    <input type="password" class="login-input" id="admin-pass" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')adminLogin()">
+    <button class="login-btn" onclick="adminLogin()">ログイン</button>
+    <div class="login-err" id="admin-err">パスワードが違います</div>
+  </div>
+</div>
+
+<!-- 管理アプリ -->
+<div class="app" id="admin-app">
+  <header>
+    <div class="header-inner">
+      <div>
+        <span class="logo">AkiBoard</span>
+        <span class="logo-badge">ADMIN</span>
+      </div>
+      <button class="logout-btn" onclick="adminLogout()">ログアウト</button>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <!-- 統計 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">登録店舗数</div>
+        <div class="stat-num orange" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">今夜公開中</div>
+        <div class="stat-num green" id="stat-live">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">今月の新規登録</div>
+        <div class="stat-num blue" id="stat-month">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">公開率</div>
+        <div class="stat-num red" id="stat-rate">0%</div>
+      </div>
+    </div>
+
+    <!-- 今夜公開中 -->
+    <div class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">今夜公開中の店舗</div>
+          <div class="section-sub">リアルタイム更新</div>
+        </div>
+        <button class="refresh-btn" onclick="renderAll()">更新</button>
+      </div>
+      <div class="live-list" id="live-list">
+        <div class="empty-msg">現在公開中の店舗はありません</div>
+      </div>
+    </div>
+
+    <!-- 登録店舗一覧 -->
+    <div class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">登録店舗一覧</div>
+          <div class="section-sub" id="store-count">0件</div>
+        </div>
+        <input type="text" class="search-input" id="search" placeholder="店名・エリアで検索..." oninput="renderStoreTable()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>店舗コード</th>
+              <th>店舗名</th>
+              <th>エリア</th>
+              <th>メールアドレス</th>
+              <th>登録日</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="store-tbody"></tbody>
+        </table>
+        <div class="empty-msg" id="no-stores" style="display:none;">登録店舗がありません</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const ADMIN_PASS = 'axia2026admin';
+const STALE_MS = 60 * 60 * 1000;
+
+function adminLogin() {
+  const pass = document.getElementById('admin-pass').value;
+  const err  = document.getElementById('admin-err');
+  if (pass === ADMIN_PASS) {
+    sessionStorage.setItem('akiboard_admin', '1');
+    err.style.display = 'none';
+    showAdminApp();
+  } else {
+    err.style.display = 'block';
+    document.getElementById('admin-pass').value = '';
+  }
+}
+
+function adminLogout() {
+  sessionStorage.removeItem('akiboard_admin');
+  document.getElementById('admin-app').classList.remove('active');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('admin-pass').value = '';
+}
+
+function showAdminApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-app').classList.add('active');
+  renderAll();
+}
+
+function getAccounts() {
+  try { return JSON.parse(localStorage.getItem('akiboard_accounts') || '{}'); } catch(e) { return {}; }
+}
+function getStores() {
+  try { return JSON.parse(localStorage.getItem('akiboard_stores') || '[]'); } catch(e) { return []; }
+}
+
+function isStale(s) { return (Date.now() - (s.refreshedAt || s.ts)) >= STALE_MS; }
+
+const STATUS_LABEL = { open:'余裕あり', some:'空きあり', few:'残りわずか', closed:'終了' };
+const STATUS_CLASS = { open:'s-open', some:'s-some', few:'s-few', closed:'s-few' };
+
+function renderAll() {
+  const accounts = getAccounts();
+  const stores   = getStores();
+  const liveStores = stores.filter(s => !isStale(s) && s.status !== 'closed');
+
+  const total = Object.keys(accounts).length;
+  const live  = liveStores.length;
+  const now   = new Date();
+  const monthStores = Object.values(accounts).filter(a => {
+    const d = new Date(a.createdAt);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+  const rate = total > 0 ? Math.round((live / total) * 100) : 0;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-live').textContent  = live;
+  document.getElementById('stat-month').textContent = monthStores;
+  document.getElementById('stat-rate').textContent  = rate + '%';
+
+  // 公開中
+  const liveList = document.getElementById('live-list');
+  if (liveStores.length === 0) {
+    liveList.innerHTML = '<div class="empty-msg">現在公開中の店舗はありません</div>';
+  } else {
+    liveList.innerHTML = liveStores.map(s => {
+      const tables = s.tables ? Object.entries(s.tables)
+        .filter(([,v])=>v>0)
+        .map(([k,v])=>`${{t2:'2名',t4:'4名',t6:'6名以上',tc:'カウンター'}[k]}${v}卓`)
+        .join(' / ') : (s.seats+'席');
+      const remain = Math.ceil((STALE_MS - (Date.now()-(s.refreshedAt||s.ts)))/60000);
+      return `<div class="live-item">
+        <div class="live-dot"></div>
+        <div class="live-name">${esc(s.name)}</div>
+        <div class="live-seats">${esc(s.area)} / ${tables}</div>
+        <div class="live-time">${esc(s.from)}〜${esc(s.to)}</div>
+        <span class="live-status ${STATUS_CLASS[s.status]||'s-open'}">${STATUS_LABEL[s.status]||'空きあり'}</span>
+        <div class="live-time">残${remain}分</div>
+      </div>`;
+    }).join('');
+  }
+
+  renderStoreTable();
+}
+
+function renderStoreTable() {
+  const accounts = getAccounts();
+  const q = (document.getElementById('search').value || '').toLowerCase();
+  const tbody = document.getElementById('store-tbody');
+  const noMsg = document.getElementById('no-stores');
+
+  const entries = Object.entries(accounts).filter(([code, a]) =>
+    !q || a.name.toLowerCase().includes(q) || (a.area||'').toLowerCase().includes(q) || code.toLowerCase().includes(q)
+  ).sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0));
+
+  document.getElementById('store-count').textContent = Object.keys(accounts).length + '件';
+
+  if (entries.length === 0) {
+    tbody.innerHTML = '';
+    noMsg.style.display = 'block';
+    return;
+  }
+  noMsg.style.display = 'none';
+  tbody.innerHTML = entries.map(([code, a]) => {
+    const date = a.createdAt ? new Date(a.createdAt).toLocaleDateString('ja-JP') : '—';
+    return `<tr>
+      <td><span class="code-badge">${esc(code)}</span></td>
+      <td>${esc(a.name)}</td>
+      <td>${esc(a.area||'—')}</td>
+      <td>${esc(a.email||'—')}</td>
+      <td><span class="date-text">${date}</span></td>
+      <td><button class="delete-btn" onclick="deleteStore('${esc(code)}')">削除</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function deleteStore(code) {
+  if (!confirm(`「${code}」を削除してもよいですか？\nこの操作は取り消せません。`)) return;
+  const db = JSON.parse(localStorage.getItem('akiboard_accounts') || '{}');
+  delete db[code];
+  localStorage.setItem('akiboard_accounts', JSON.stringify(db));
+
+  // 該当店舗の公開データも削除
+  try {
+    const stores = JSON.parse(localStorage.getItem('akiboard_stores') || '[]');
+    localStorage.setItem('akiboard_stores', JSON.stringify(stores.filter(s => s.storeCode !== code)));
+  } catch(e) {}
+
+  renderAll();
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// 自動更新（30秒ごと）
+setInterval(() => {
+  if (sessionStorage.getItem('akiboard_admin')) renderAll();
+}, 30000);
+
+// セッション確認
+if (sessionStorage.getItem('akiboard_admin')) {
+  showAdminApp();
+}
+</script>
+</body>
+</html>
