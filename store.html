@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AkiBoard — 店舗管理</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root {
     --orange:#f97316;--orange-dark:#c2640f;--orange-light:#fff7ed;
@@ -14,11 +15,31 @@
   }
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+  /* LOGIN SCREEN */
+  .login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+  .login-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:32px 28px;width:100%;max-width:380px}
+  .login-logo{font-family:'Montserrat',sans-serif;font-size:22px;font-weight:800;color:var(--orange);text-align:center;margin-bottom:6px}
+  .login-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:28px}
+  .login-label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px}
+  .login-input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;-webkit-appearance:none;margin-bottom:16px}
+  .login-input:focus{border-color:var(--orange);background:#fff}
+  .login-btn{width:100%;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .2s;margin-top:4px}
+  .login-btn:hover{background:var(--orange-dark)}
+  .login-error{font-size:13px;color:var(--red);text-align:center;margin-top:12px;display:none}
+  .login-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.7}
+
+  /* MAIN APP (hidden until login) */
+  .app{display:none}
+  .app.active{display:block}
+
   header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;position:sticky;top:0;z-index:100}
   .header-inner{max-width:540px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px}
   .logo{font-family:'Montserrat',sans-serif;font-size:18px;font-weight:800;color:var(--orange)}
   .logo-sub{font-size:11px;color:var(--muted);font-weight:400;margin-left:6px;font-family:'Noto Sans JP',sans-serif}
   .view-link{font-size:12px;color:var(--orange);text-decoration:none;font-weight:500;border:1px solid var(--orange);padding:5px 12px;border-radius:20px}
+  .logout-btn{font-size:12px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif;padding:5px 8px}
+  .logout-btn:hover{color:var(--text)}
   .tab-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 20px;max-width:540px;margin:0 auto}
   .tab-btn{padding:13px 20px;font-size:13px;font-weight:500;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;font-family:'Noto Sans JP',sans-serif}
   .tab-btn.active{color:var(--orange);border-bottom-color:var(--orange)}
@@ -93,10 +114,77 @@
 </style>
 </head>
 <body>
+
+<!-- ログイン画面 -->
+<!-- ログイン画面 -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">AkiBoard</div>
+    <div class="login-sub">店舗管理画面</div>
+    <label class="login-label">店舗コード</label>
+    <input type="text" class="login-input" id="login-code" placeholder="例：AKIB-2847" autocomplete="off">
+    <label class="login-label">パスワード</label>
+    <input type="password" class="login-input" id="login-pass" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">ログイン</button>
+    <div class="login-error" id="login-error">店舗コードまたはパスワードが違います</div>
+    <div style="text-align:center;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">初めてご利用の方はこちら</div>
+      <button class="login-btn" style="background:var(--bg);color:var(--text);border:1px solid var(--border);" onclick="showRegister()">新規登録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新規登録画面 -->
+<div class="login-screen" id="register-screen" style="display:none;">
+  <div class="login-card">
+    <div class="login-logo">AkiBoard</div>
+    <div class="login-sub" style="margin-bottom:20px;">店舗を新規登録</div>
+    <label class="login-label">店舗名 <span style="color:var(--red)">*</span></label>
+    <input type="text" class="login-input" id="reg-name" placeholder="例：居酒屋 むらさき">
+    <label class="login-label">エリア <span style="color:var(--red)">*</span></label>
+    <input type="text" class="login-input" id="reg-area" placeholder="例：梅田・難波・天王寺">
+    <label class="login-label">メールアドレス <span style="color:var(--red)">*</span></label>
+    <input type="email" class="login-input" id="reg-email" placeholder="store@example.com">
+    <label class="login-label">パスワード（4文字以上） <span style="color:var(--red)">*</span></label>
+    <input type="password" class="login-input" id="reg-pass" placeholder="自分で決めてください">
+    <label class="login-label">パスワード（確認）</label>
+    <input type="password" class="login-input" id="reg-pass2" placeholder="もう一度入力">
+    <button class="login-btn" onclick="doRegister()">登録して店舗コードを取得する</button>
+    <div class="login-error" id="reg-error"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <button style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;" onclick="showLogin()">← ログインに戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- 登録完了画面 -->
+<div class="login-screen" id="complete-screen" style="display:none;">
+  <div class="login-card" style="text-align:center;">
+    <div style="font-size:36px;margin-bottom:12px;">🎉</div>
+    <div class="login-logo" style="margin-bottom:8px;">登録完了！</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:24px;">あなたの店舗コードをメモしてください</div>
+    <div style="background:var(--orange-light);border:2px solid var(--orange);border-radius:var(--radius-sm);padding:20px;margin-bottom:20px;">
+      <div style="font-size:12px;color:var(--orange);font-weight:500;margin-bottom:6px;">店舗コード</div>
+      <div id="issued-code" style="font-family:'Montserrat',sans-serif;font-size:28px;font-weight:800;color:var(--orange);letter-spacing:0.1em;">AKIB-0000</div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:24px;">
+      このコードは次回ログイン時に必要です。<br>
+      スクリーンショットまたはメモを取ってください。
+    </div>
+    <button class="login-btn" onclick="enterApp()">管理画面に進む →</button>
+  </div>
+</div>
+
+<!-- メインアプリ -->
+<div class="app" id="main-app">
+
 <header>
   <div class="header-inner">
     <div><span class="logo">AkiBoard</span><span class="logo-sub">店舗管理</span></div>
-    <a class="view-link" href="index.html">お客さん画面 →</a>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <a class="view-link" href="index.html">お客さん画面 →</a>
+      <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+    </div>
   </div>
 </header>
 <div class="tab-bar">
@@ -509,6 +597,115 @@ function showPreview(src,name,access){
 }
 
 const mine=getMyStore();if(mine)renderPublishTab();else renderPublishTab();
+
+// ===== AUTH =====
+function generateCode() {
+  const n = Math.floor(1000 + Math.random() * 9000);
+  return 'AKIB-' + n;
+}
+
+function getAccountsDB() {
+  try { return JSON.parse(localStorage.getItem('akiboard_accounts') || '{}'); } catch(e) { return {}; }
+}
+function saveAccountsDB(db) { localStorage.setItem('akiboard_accounts', JSON.stringify(db)); }
+
+function showLogin() {
+  document.getElementById('register-screen').style.display = 'none';
+  document.getElementById('complete-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+function showRegister() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('register-screen').style.display = 'flex';
+}
+
+function doRegister() {
+  const name  = document.getElementById('reg-name').value.trim();
+  const area  = document.getElementById('reg-area').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  const err   = document.getElementById('reg-error');
+
+  if (!name || !area)        { err.style.display='block'; err.textContent='店舗名とエリアを入力してください'; return; }
+  if (!email || !email.includes('@')) { err.style.display='block'; err.textContent='正しいメールアドレスを入力してください'; return; }
+  if (pass.length < 4)       { err.style.display='block'; err.textContent='パスワードは4文字以上にしてください'; return; }
+  if (pass !== pass2)        { err.style.display='block'; err.textContent='パスワードが一致しません'; return; }
+  err.style.display = 'none';
+
+  // コード発行
+  const db = getAccountsDB();
+  let code;
+  do { code = generateCode(); } while (db[code]);
+  db[code] = { pass, name, area, email, createdAt: Date.now() };
+  saveAccountsDB(db);
+  setProfile({ name, area, genre: 'izakaya', photos: [] });
+  localStorage.setItem('akiboard_session', JSON.stringify({ code, name, ts: Date.now() }));
+
+  // 完了画面へ先に遷移
+  document.getElementById('issued-code').textContent = code;
+  document.getElementById('register-screen').style.display = 'none';
+  document.getElementById('complete-screen').style.display = 'flex';
+
+  // EmailJS でメール送信
+  emailjs.init('M8Uh82xbEBhX85YRa');
+  emailjs.send('service_zfi6l4c', 'template_a0upj4b', {
+    to_email: email,
+    store_name: name,
+    store_code: code,
+  }).catch(e => console.warn('メール送信エラー:', e));
+}
+
+function enterApp() {
+  document.getElementById('complete-screen').style.display = 'none';
+  document.getElementById('main-app').classList.add('active');
+  renderPublishTab();
+}
+
+function doLogin() {
+  const code = document.getElementById('login-code').value.trim().toUpperCase();
+  const pass = document.getElementById('login-pass').value;
+  const err  = document.getElementById('login-error');
+  const db = getAccountsDB();
+  const store = db[code];
+  if (store && store.pass === pass) {
+    localStorage.setItem('akiboard_session', JSON.stringify({ code, name: store.name, ts: Date.now() }));
+    err.style.display = 'none';
+    showApp();
+  } else {
+    err.style.display = 'block';
+    document.getElementById('login-pass').value = '';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('akiboard_session');
+  document.getElementById('main-app').classList.remove('active');
+  showLogin();
+  document.getElementById('login-code').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').classList.add('active');
+  renderPublishTab();
+}
+
+// セッション確認
+const session = localStorage.getItem('akiboard_session');
+if (session) {
+  try {
+    const s = JSON.parse(session);
+    if (Date.now() - s.ts < 24 * 60 * 60 * 1000) {
+      showApp();
+    } else {
+      localStorage.removeItem('akiboard_session');
+    }
+  } catch(e) {}
+}
 </script>
+
+</div><!-- /.app -->
 </body>
 </html>
